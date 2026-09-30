@@ -33,7 +33,8 @@ public class EnemyVision : MonoBehaviour
 
     // Resultados que leen otros scripts
     public bool CanSeePlayer { get; private set; }
-    public bool PlayerInProximity { get; private set; }
+    public bool PlayerInProximity => playerInsideZone && !IsPlayerHidden; // Escondido: no lo siente
+    public bool IsPlayerHidden => hiding != null && hiding.IsHidden;
     public Transform Player => player;
     public float ViewDistance => viewDistance;
     public float ViewAngle => viewAngle;
@@ -41,6 +42,8 @@ public class EnemyVision : MonoBehaviour
 
     private Transform player;
     private SphereCollider proximityZone;
+    private PlayerHiding hiding;
+    private bool playerInsideZone;   // Si el jugador está dentro del círculo de cercanía
     private Color originalColor;
 
     private void Awake()
@@ -60,6 +63,7 @@ public class EnemyVision : MonoBehaviour
             return;
         }
         player = playerObject.transform;
+        hiding = player.GetComponent<PlayerHiding>();
 
         if (bodyRenderer == null)
             bodyRenderer = GetComponentInChildren<Renderer>();
@@ -76,6 +80,9 @@ public class EnemyVision : MonoBehaviour
 
     private bool CheckVision()
     {
+        // Escondido: invisible para el enemigo
+        if (IsPlayerHidden) return false;
+
         Vector3 eyePosition = transform.position + Vector3.up * eyeHeight;
         Vector3 toPlayer = player.position - eyePosition;
 
@@ -102,12 +109,12 @@ public class EnemyVision : MonoBehaviour
     // ---- Zona de cercanía: Unity avisa solo cuando algo entra o sale del trigger ----
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player")) PlayerInProximity = true;
+        if (other.CompareTag("Player")) playerInsideZone = true;
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player")) PlayerInProximity = false;
+        if (other.CompareTag("Player")) playerInsideZone = false;
     }
 
     private void UpdateFeedbackColor()

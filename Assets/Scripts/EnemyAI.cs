@@ -2,24 +2,8 @@ using System;
 using UnityEngine;
 using UnityEngine.AI; // Necesario para NavMeshAgent
 
-/// <summary>
-/// Los estados del enemigo. Es público para que otros scripts (conos, sonido, UI)
-/// puedan leerlo.
-/// </summary>
 public enum EnemyState { Patrol, Alert, Investigate, Chase }
 
-/// <summary>
-/// Cerebro del enemigo (máquina de estados):
-///
-///  Patrol      Camina de waypoint en waypoint.
-///  Alert       Detectó algo. Se queda parado mirando y su medidor de SOSPECHA sube de a poco.
-///              Si el medidor se llena -> Chase. Si te pierde de vista -> Investigate.
-///  Investigate Va al último lugar donde te vio, mira alrededor y, si no hay nada, vuelve a patrullar
-///              (retomando el camino hacia el waypoint que venía).
-///  Chase       Está seguro de haberte visto: te persigue.
-///
-/// El medidor de sospecha (0 a 1) NO se reinicia al cambiar de estado: baja lentamente con el tiempo.
-/// </summary>
 [RequireComponent(typeof(NavMeshAgent), typeof(EnemyVision))]
 public class EnemyAI : MonoBehaviour
 {
@@ -28,6 +12,7 @@ public class EnemyAI : MonoBehaviour
     [SerializeField] private float patrolSpeed = 2f;       // Velocidad al patrullar
     [SerializeField] private float waitTime = 1.5f;        // Segundos que espera en cada punto
     [SerializeField] private float arriveDistance = 0.3f;  // Qué tan cerca debe estar para "llegar"
+    [SerializeField] private bool faceWaypointDirection = false; // Al esperar en un punto, gira hacia donde apunta ese waypoint (guardias)
 
     [Header("Sospecha (estado Alerta)")]
     [SerializeField] private float suspicionFillTime = 3f;      // Segundos de vista continua para llenar el medidor (a velocidad normal)
@@ -61,7 +46,6 @@ public class EnemyAI : MonoBehaviour
     public EnemyState CurrentState { get; private set; } = EnemyState.Patrol;
     public event Action<EnemyState> StateChanged;
 
-    /// <summary>Medidor de sospecha: 0 = tranquilo, 1 = seguro de haberte visto.</summary>
     public float Suspicion => suspicion;
 
     private NavMeshAgent agent;
@@ -247,6 +231,13 @@ public class EnemyAI : MonoBehaviour
         if (waiting)
         {
             waitTimer -= Time.deltaTime;
+
+            if (faceWaypointDirection)
+            {
+                transform.rotation = Quaternion.RotateTowards(
+                    transform.rotation, waypoints[currentIndex].rotation, lookTurnSpeed * Time.deltaTime);
+            }
+
             if (waitTimer <= 0f)
             {
                 waiting = false;
@@ -388,7 +379,7 @@ public class EnemyAI : MonoBehaviour
 
         // ¿Nos alcanzó?
         float distanceToPlayer = Vector3.Distance(transform.position, vision.Player.position);
-        if (distanceToPlayer <= catchDistance && GameManager.Instance != null)
+        if (distanceToPlayer <= catchDistance && !vision.IsPlayerHidden && GameManager.Instance != null)
             GameManager.Instance.Lose("¡TE ATRAPARON!");
 
         // Te perdió: no vuelve directo a patrullar, va a revisar el último punto
