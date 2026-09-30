@@ -278,6 +278,7 @@ GameObject:
   - component: {fileID: 31440322}
   - component: {fileID: 31440328}
   - component: {fileID: 31440329}
+  - component: {fileID: 31440330}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -297,7 +298,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3896b94048ebeae47b55f438a4926afa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
-  walkSpeed: 4
   turnSpeed: 720
   cameraTransform: {fileID: 0}
 --- !u!54 &31440323
@@ -449,6 +449,31 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHiding
   hiddenDarkness: 0.6
+--- !u!114 &31440330
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 31440321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6d08920d0a7dbc459566929259d7d61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStealth
+  crouchSpeed: 2
+  walkSpeed: 4
+  runSpeed: 6
+  crouchNoise: 2
+  walkNoise: 5
+  runNoise: 10
+  noiseInterval: 0.3
+  crouchHeightScale: 0.65
+  showNoiseRing: 1
+  ringSmoothing: 10
+  crouchColor: {r: 0.4, g: 1, b: 0.6, a: 0.5}
+  walkColor: {r: 1, g: 1, b: 1, a: 0.45}
+  runColor: {r: 1, g: 0.4, b: 0.3, a: 0.65}
 --- !u!1 &33676918
 GameObject:
   m_ObjectHideFlags: 0
@@ -1385,6 +1410,7 @@ GameObject:
   - component: {fileID: 369438366}
   - component: {fileID: 369438365}
   - component: {fileID: 369438364}
+  - component: {fileID: 369438372}
   m_Layer: 0
   m_Name: Enemigo_Este
   m_TagString: Untagged
@@ -1465,6 +1491,9 @@ MonoBehaviour:
   chaseSpeed: 3.5
   catchDistance: 1.3
   loseSightTime: 2
+  noiseSuspicionStep: 0.1
+  noiseSuspicionCap: 0.6
+  noiseMemory: 1.5
   showBodyColor: 0
   bodyRenderer: {fileID: 0}
   alertColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
@@ -1613,6 +1642,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 369438362}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &369438372
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 369438362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6526be1b744654443a2c5360fcd6979b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHearing
+  hearingMultiplier: 1
+  wallMuffle: 0.5
+  earHeight: 0.5
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -2074,6 +2118,7 @@ GameObject:
   - component: {fileID: 523574326}
   - component: {fileID: 523574325}
   - component: {fileID: 523574324}
+  - component: {fileID: 523574332}
   m_Layer: 0
   m_Name: Enemigo_Central
   m_TagString: Untagged
@@ -2152,6 +2197,9 @@ MonoBehaviour:
   chaseSpeed: 3.5
   catchDistance: 1.3
   loseSightTime: 2
+  noiseSuspicionStep: 0.1
+  noiseSuspicionCap: 0.6
+  noiseMemory: 1.5
   showBodyColor: 0
   bodyRenderer: {fileID: 0}
   alertColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
@@ -2300,6 +2348,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 523574322}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &523574332
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 523574322}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6526be1b744654443a2c5360fcd6979b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHearing
+  hearingMultiplier: 1
+  wallMuffle: 0.5
+  earHeight: 0.5
 --- !u!1 &534114432
 GameObject:
   m_ObjectHideFlags: 0
@@ -6089,6 +6152,7 @@ GameObject:
   - component: {fileID: 2128856234}
   - component: {fileID: 2128856233}
   - component: {fileID: 2128856232}
+  - component: {fileID: 2128856240}
   m_Layer: 0
   m_Name: Guardia_Meta
   m_TagString: Untagged
@@ -6169,6 +6233,9 @@ MonoBehaviour:
   chaseSpeed: 3.5
   catchDistance: 1.3
   loseSightTime: 2
+  noiseSuspicionStep: 0.1
+  noiseSuspicionCap: 0.6
+  noiseMemory: 1.5
   showBodyColor: 0
   bodyRenderer: {fileID: 0}
   alertColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
@@ -6317,6 +6384,21 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2128856230}
   m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &2128856240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2128856230}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6526be1b744654443a2c5360fcd6979b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHearing
+  hearingMultiplier: 1
+  wallMuffle: 0.5
+  earHeight: 0.5
 --- !u!1 &2131960194
 GameObject:
   m_ObjectHideFlags: 0

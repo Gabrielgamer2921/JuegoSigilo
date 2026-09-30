@@ -1,16 +1,10 @@
 using UnityEngine;
 using UnityEngine.InputSystem; // Namespace del New Input System
 
-/// <summary>
-/// Mueve al jugador usando el sistema de físicas (Rigidbody).
-/// El movimiento es relativo a hacia dónde mira la cámara:
-/// W siempre te lleva "hacia adelante" según la cámara.
-/// </summary>
-[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Rigidbody), typeof(PlayerStealth))]
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movimiento")]
-    [SerializeField] private float walkSpeed = 4f;     // Velocidad al caminar (m/s)
     [SerializeField] private float turnSpeed = 720f;   // Qué tan rápido gira el cuerpo (grados/s)
 
     [Header("Referencias")]
@@ -19,11 +13,21 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody rb;
     private Vector2 moveInput; // x = izquierda/derecha, y = adelante/atrás
     private PlayerHiding hiding; // Si está escondido, no se mueve
+    private PlayerStealth stealth; // Define la velocidad según caminar, correr o agacharse
+    private PlayerWallKnock wallKnock; // Pegado a una pared, no se mueve
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         hiding = GetComponent<PlayerHiding>();
+        wallKnock = GetComponent<PlayerWallKnock>();
+
+        stealth = GetComponent<PlayerStealth>();
+        if (stealth == null)
+        {
+            Debug.LogWarning("PlayerMovement: faltaba PlayerStealth en el Player, se agregó automáticamente.", this);
+            stealth = gameObject.AddComponent<PlayerStealth>();
+        }
 
         // Evita que el jugador se caiga o rote por choques con las físicas.
         // Nosotros controlamos la rotación a mano.
@@ -40,6 +44,9 @@ public class PlayerMovement : MonoBehaviour
 
         // Escondido: no se mueve (moveInput queda en cero)
         if (hiding != null && hiding.IsHidden) return;
+
+        // Pegado a una pared: tampoco se mueve
+        if (wallKnock != null && wallKnock.IsAttached) return;
 
         Keyboard kb = Keyboard.current;
         if (kb == null) return;
@@ -67,7 +74,7 @@ public class PlayerMovement : MonoBehaviour
         Vector3 direction = camForward * moveInput.y + camRight * moveInput.x;
 
         // Seteamos la velocidad. Conservamos la Y para que la gravedad siga funcionando.
-        Vector3 velocity = direction * walkSpeed;
+        Vector3 velocity = direction * stealth.CurrentSpeed;
         velocity.y = rb.linearVelocity.y;
         rb.linearVelocity = velocity;
 

@@ -13,12 +13,12 @@ public static class LevelGenerator
 
     private class Materials
     {
-        public Material floor, wall, crate, player, enemy, goal, start, nose, hide;
+        public Material floor, wall, crate, player, enemy, goal, start, nose, hide, knock;
     }
 
     private class Level
     {
-        public Transform root, geometry, markers, hiding, enemies;
+        public Transform root, geometry, markers, hiding, knockZones, enemies;
         public Materials mats;
     }
 
@@ -108,6 +108,10 @@ public static class LevelGenerator
         CreateHidingSpot("Escondite_Norte", level, -7f, 18f);
         CreateHidingSpot("Escondite_Meta", level, 10.2f, 18.3f);
 
+        // Zonas para golpear la pared y atraer enemigos (no deben solaparse con los escondites)
+        CreateKnockZone("Golpe_Sur", level, 6f, -10.5f, 0f);
+        CreateKnockZone("Golpe_Norte", level, 4f, 19f, 0f);
+
         Vector3 startPos = new Vector3(-16f, 0f, -16f);
         CreateStart(level, startPos);
         CreateGoal(level, new Vector3(17.5f, 1f, 17.5f));
@@ -180,6 +184,7 @@ public static class LevelGenerator
         level.geometry = CreateGroup("Geometria", level.root);
         level.markers = CreateGroup("Marcadores", level.root);
         level.hiding = CreateGroup("Escondites", level.root);
+        level.knockZones = CreateGroup("ZonasGolpe", level.root);
         level.enemies = CreateGroup("Enemigos", level.root);
 
         // Solo "Geometria" se hornea: escondites, meta, jugador y enemigos quedan fuera del NavMesh
@@ -242,6 +247,16 @@ public static class LevelGenerator
         spot.AddComponent<HidingSpot>();
     }
 
+    // yaw: hacia dónde queda la pared (0 = norte, 90 = este, 180 = sur, 270 = oeste)
+    private static void CreateKnockZone(string name, Level level, float x, float z, float yaw)
+    {
+        GameObject zone = Box(name, level.knockZones, new Vector3(x, 1.1f, z),
+                              new Vector3(3f, 2.2f, 2f), level.mats.knock);
+        zone.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+        zone.GetComponent<Collider>().isTrigger = true;
+        zone.AddComponent<WallKnockZone>();
+    }
+
     private static Transform[] CreateRoute(Level level, string enemyName, params Vector3[] points)
     {
         Transform group = CreateGroup("Waypoints_" + enemyName, level.root);
@@ -280,6 +295,7 @@ public static class LevelGenerator
         EnemyAI ai = enemy.AddComponent<EnemyAI>();
         SetObjectArray(ai, "waypoints", route);
 
+        enemy.AddComponent<EnemyHearing>();
         enemy.AddComponent<ConeVisualizer>();
         AddNose(enemy.transform, level.mats.nose);
         return enemy;
@@ -372,6 +388,10 @@ public static class LevelGenerator
 
         if (player.GetComponent<PlayerHiding>() == null)
             player.AddComponent<PlayerHiding>();
+        if (player.GetComponent<PlayerStealth>() == null)
+            player.AddComponent<PlayerStealth>();
+        if (player.GetComponent<PlayerWallKnock>() == null)
+            player.AddComponent<PlayerWallKnock>();
 
         player.transform.SetPositionAndRotation(position, Quaternion.identity);
         return player;
@@ -457,7 +477,8 @@ public static class LevelGenerator
             goal = GetMaterial("Meta", new Color(0.20f, 0.85f, 0.35f)),
             start = GetMaterial("Inicio", new Color(0.40f, 0.85f, 1.00f)),
             nose = GetMaterial("Frente", new Color(0.95f, 0.95f, 0.95f)),
-            hide = GetTransparentMaterial("Escondite", new Color(0.15f, 0.9f, 0.35f, 0.35f))
+            hide = GetTransparentMaterial("Escondite", new Color(0.15f, 0.9f, 0.35f, 0.35f)),
+            knock = GetTransparentMaterial("ZonaGolpe", new Color(0.3f, 0.7f, 1f, 0.35f))
         };
     }
 

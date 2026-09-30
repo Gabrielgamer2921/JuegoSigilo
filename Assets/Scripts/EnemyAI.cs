@@ -35,6 +35,11 @@ public class EnemyAI : MonoBehaviour
     [SerializeField] private float catchDistance = 1.3f;   // A esta distancia te "atrapa"
     [SerializeField] private float loseSightTime = 2f;     // Segundos sin verte antes de dejar de correr
 
+    [Header("Oído")]
+    [SerializeField] private float noiseSuspicionStep = 0.1f;   // Cuánto sube la sospecha por cada ruido oído
+    [SerializeField, Range(0f, 1f)] private float noiseSuspicionCap = 0.6f; // Solo con ruido nunca llega a estar seguro
+    [SerializeField] private float noiseMemory = 1.5f;          // Ruidos separados por menos que esto cuentan como el mismo
+
     [Header("Feedback en el cuerpo (opcional: los conos ya muestran el estado)")]
     [SerializeField] private bool showBodyColor = false;
     [SerializeField] private Renderer bodyRenderer;        // Si está vacío lo busca solo
@@ -70,6 +75,8 @@ public class EnemyAI : MonoBehaviour
 
     // Persecución
     private float timeSinceSeen;
+
+    private float lastNoiseTime = -999f;
 
     private Color patrolColor;
 
@@ -313,12 +320,7 @@ public class EnemyAI : MonoBehaviour
 
         // Señal nueva: se frena un momento a pensar "¿qué fue eso?"
         if (newSighting)
-        {
-            reactionTimer = reactionPause;
-            searching = false;               // Si estaba mirando alrededor, deja de hacerlo
-            agent.isStopped = true;
-            agent.velocity = Vector3.zero;
-        }
+            StartReaction();
 
         // Durante la pausa: parado, mirando hacia donde te vio
         if (reactionTimer > 0f)
@@ -366,6 +368,56 @@ public class EnemyAI : MonoBehaviour
         // No había nada: vuelve a patrullar
         if (searchTimer >= searchTime)
             SetState(EnemyState.Patrol);
+    }
+
+    private void StartReaction()
+    {
+        reactionTimer = reactionPause;
+        searching = false;               // Si estaba mirando alrededor, deja de hacerlo
+        agent.isStopped = true;
+        agent.velocity = Vector3.zero;
+    }
+
+    // ---------------- OÍDO ----------------
+
+    public void HearNoise(Vector3 position)
+    {
+        if (!enabled) return;
+        if (CurrentState == EnemyState.Alert || CurrentState == EnemyState.Chase) return;
+
+        lastKnownPosition = position;
+
+        if (suspicion < noiseSuspicionCap)
+            suspicion = Mathf.Min(noiseSuspicionCap, suspicion + noiseSuspicionStep);
+
+        bool freshNoise = Time.time - lastNoiseTime > noiseMemory;
+        lastNoiseTime = Time.time;
+
+        if (CurrentState == EnemyState.Patrol)
+        {
+            // Si estaba esperando en un waypoint, al volver sigue con el siguiente
+            if (waiting)
+            {
+                waiting = false;
+                currentIndex = (currentIndex + 1) % waypoints.Length;
+            }
+
+            SetState(EnemyState.Investigate);
+            StartReaction();
+            return;
+        }
+
+        // Ya investigando: un ruido nuevo lo frena a pensar; ruidos seguidos solo actualizan el destino
+        if (freshNoise)
+        {
+            StartReaction();
+        }
+        else if (reactionTimer <= 0f)
+        {
+            searching = false;
+            agent.isStopped = false;
+            SetDestinationSafe(position);
+        }
     }
 
     // ---------------- PERSECUCIÓN ----------------
