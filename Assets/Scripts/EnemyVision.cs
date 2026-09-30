@@ -25,7 +25,8 @@ public class EnemyVision : MonoBehaviour
     [Header("Zona de cercanía (SphereCollider)")]
     [SerializeField] private float proximityRadius = 2.5f;
 
-    [Header("Feedback temporal (después lo reemplazan los conos)")]
+    [Header("Feedback de debug (ahora el color lo maneja EnemyAI)")]
+    [SerializeField] private bool showDebugColor = false;
     [SerializeField] private Renderer bodyRenderer;                  // Si está vacío lo busca solo
     [SerializeField] private Color proximityColor = Color.yellow;
     [SerializeField] private Color spottedColor = Color.white;
@@ -34,6 +35,9 @@ public class EnemyVision : MonoBehaviour
     public bool CanSeePlayer { get; private set; }
     public bool PlayerInProximity { get; private set; }
     public Transform Player => player;
+    public float ViewDistance => viewDistance;
+    public float ViewAngle => viewAngle;
+    public float EyeHeight => eyeHeight;
 
     private Transform player;
     private SphereCollider proximityZone;
@@ -108,7 +112,7 @@ public class EnemyVision : MonoBehaviour
 
     private void UpdateFeedbackColor()
     {
-        if (bodyRenderer == null) return;
+        if (!showDebugColor || bodyRenderer == null) return;
 
         if (CanSeePlayer)
             bodyRenderer.material.color = spottedColor;

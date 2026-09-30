@@ -49,22 +49,22 @@ public static class LevelGenerator
         }
 
         // ---- Materiales (se guardan como assets en Assets/Materials/Sigilo) ----
-        Material matFloor  = GetMaterial("Piso",     new Color(0.22f, 0.24f, 0.27f));
-        Material matWall   = GetMaterial("Pared",    new Color(0.45f, 0.47f, 0.50f));
-        Material matCrate  = GetMaterial("Caja",     new Color(0.62f, 0.45f, 0.25f));
-        Material matPlayer = GetMaterial("Jugador",  new Color(0.20f, 0.45f, 1.00f));
-        Material matEnemy  = GetMaterial("Enemigo",  new Color(0.85f, 0.15f, 0.15f));
-        Material matGoal   = GetMaterial("Meta",     new Color(0.20f, 0.85f, 0.35f));
-        Material matStart  = GetMaterial("Inicio",   new Color(0.40f, 0.85f, 1.00f));
-        Material matNose   = GetMaterial("Frente",   new Color(0.95f, 0.95f, 0.95f));
+        Material matFloor = GetMaterial("Piso", new Color(0.22f, 0.24f, 0.27f));
+        Material matWall = GetMaterial("Pared", new Color(0.45f, 0.47f, 0.50f));
+        Material matCrate = GetMaterial("Caja", new Color(0.62f, 0.45f, 0.25f));
+        Material matPlayer = GetMaterial("Jugador", new Color(0.20f, 0.45f, 1.00f));
+        Material matEnemy = GetMaterial("Enemigo", new Color(0.85f, 0.15f, 0.15f));
+        Material matGoal = GetMaterial("Meta", new Color(0.20f, 0.85f, 0.35f));
+        Material matStart = GetMaterial("Inicio", new Color(0.40f, 0.85f, 1.00f));
+        Material matNose = GetMaterial("Frente", new Color(0.95f, 0.95f, 0.95f));
 
         // ---- Estructura de carpetas en la Hierarchy ----
         GameObject root = new GameObject(RootName);
         Undo.RegisterCreatedObjectUndo(root, "Generar nivel");
 
-        Transform geometry  = CreateGroup("Geometria", root.transform);
-        Transform markers   = CreateGroup("Marcadores", root.transform);
-        Transform enemies   = CreateGroup("Enemigos", root.transform);
+        Transform geometry = CreateGroup("Geometria", root.transform);
+        Transform markers = CreateGroup("Marcadores", root.transform);
+        Transform enemies = CreateGroup("Enemigos", root.transform);
         Transform waypoints = CreateGroup("Waypoints_Enemigo1", root.transform);
 
         // ---- Geometría del nivel ----
@@ -72,8 +72,8 @@ public static class LevelGenerator
 
         // Bordes del mapa
         Wall("Borde_Norte", geometry, 0f, 20.5f, 42f, 1f, matWall);
-        Wall("Borde_Sur",   geometry, 0f, -20.5f, 42f, 1f, matWall);
-        Wall("Borde_Este",  geometry, 20.5f, 0f, 1f, 42f, matWall);
+        Wall("Borde_Sur", geometry, 0f, -20.5f, 42f, 1f, matWall);
+        Wall("Borde_Este", geometry, 20.5f, 0f, 1f, 42f, matWall);
         Wall("Borde_Oeste", geometry, -20.5f, 0f, 1f, 42f, matWall);
 
         // Muro sur: deja una entrada de 12 m en el centro (x entre -6 y 6)
@@ -85,9 +85,9 @@ public static class LevelGenerator
 
         // Cajas para cubrirse dentro del patio
         Box("Caja_1", geometry, new Vector3(-3f, 1f, -5f), new Vector3(2f, 2f, 2f), matCrate);
-        Box("Caja_2", geometry, new Vector3(5f, 1f, -5f),  new Vector3(2f, 2f, 2f), matCrate);
-        Box("Caja_3", geometry, new Vector3(6f, 1f, 5f),   new Vector3(2f, 2f, 2f), matCrate);
-        Box("Caja_4", geometry, new Vector3(13f, 1f, 4f),  new Vector3(2f, 2f, 2f), matCrate);
+        Box("Caja_2", geometry, new Vector3(5f, 1f, -5f), new Vector3(2f, 2f, 2f), matCrate);
+        Box("Caja_3", geometry, new Vector3(6f, 1f, 5f), new Vector3(2f, 2f, 2f), matCrate);
+        Box("Caja_4", geometry, new Vector3(13f, 1f, 4f), new Vector3(2f, 2f, 2f), matCrate);
 
         // NavMeshSurface: solo hornea lo que está dentro de "Geometria"
         // (así el Player y los enemigos NO quedan "pintados" en el mapa de navegación)
@@ -120,6 +120,7 @@ public static class LevelGenerator
         enemy.AddComponent<EnemyVision>();
         EnemyAI ai = enemy.AddComponent<EnemyAI>();
         SetObjectArray(ai, "waypoints", new Object[] { wp1, wp2 });
+        enemy.AddComponent<ConeVisualizer>();
         AddNose(enemy.transform, matNose);
 
         // ---- Jugador, cámara y GameManager (se reutilizan si ya existen) ----

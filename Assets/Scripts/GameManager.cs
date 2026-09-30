@@ -15,7 +15,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Reglas")]
     [Tooltip("ON: perdés apenas te detectan (Nota 4). OFF: perdés cuando un enemigo te alcanza (Nota 7).")]
-    [SerializeField] private bool loseWhenDetected = true;
+    [SerializeField] private bool loseWhenDetected = false;
 
     public GameState State { get; private set; } = GameState.Playing;
 
