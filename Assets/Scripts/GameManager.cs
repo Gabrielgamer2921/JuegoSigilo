@@ -2,11 +2,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// Controla el estado general de la partida: jugando, ganó o perdió.
-/// Otros scripts le avisan (Win / Lose / OnPlayerDetected) y él decide qué hacer.
-/// El texto en pantalla usa OnGUI (simple, sin Canvas). Más adelante lo reemplazamos por una UI real.
-/// </summary>
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
@@ -26,10 +21,8 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-        Time.timeScale = 1f; // Por si veníamos de una partida terminada (que congela el tiempo)
+        Time.timeScale = 1f;
     }
-
-    // ---- Métodos que llaman otros scripts ----
 
     public void Win()
     {
@@ -41,30 +34,26 @@ public class GameManager : MonoBehaviour
         End(GameState.Lost, reason);
     }
 
-    // El enemigo avisa que detectó al jugador. Solo perdemos si la regla está activada.
     public void OnPlayerDetected()
     {
         if (loseWhenDetected)
             Lose("¡TE DETECTARON!");
     }
 
-    // ---- Internos ----
-
     private void End(GameState newState, string text)
     {
-        if (State != GameState.Playing) return; // Ya terminó, ignoramos avisos repetidos
+        if (State != GameState.Playing) return;
 
         State = newState;
         message = text;
 
-        Time.timeScale = 0f;                      // Congela el juego
-        Cursor.lockState = CursorLockMode.None;   // Devolvemos el mouse
+        Time.timeScale = 0f;
+        Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
 
     private void Update()
     {
-        // Con timeScale = 0, Update sigue corriendo, así que podemos leer la tecla R
         if (State != GameState.Playing
             && Keyboard.current != null
             && Keyboard.current.rKey.wasPressedThisFrame)

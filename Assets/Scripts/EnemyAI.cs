@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-using UnityEngine.AI; // Necesario para NavMeshAgent
+using UnityEngine.AI;
 
 public enum EnemyState { Patrol, Alert, Investigate, Chase }
 
@@ -8,46 +8,45 @@ public enum EnemyState { Patrol, Alert, Investigate, Chase }
 public class EnemyAI : MonoBehaviour
 {
     [Header("Patrulla")]
-    [SerializeField] private Transform[] waypoints;        // Puntos por los que pasa (en orden)
-    [SerializeField] private float patrolSpeed = 2f;       // Velocidad al patrullar
-    [SerializeField] private float waitTime = 1.5f;        // Segundos que espera en cada punto
-    [SerializeField] private float arriveDistance = 0.3f;  // Qué tan cerca debe estar para "llegar"
-    [SerializeField] private bool faceWaypointDirection = false; // Al esperar en un punto, gira hacia donde apunta ese waypoint (guardias)
+    [SerializeField] private Transform[] waypoints;
+    [SerializeField] private float patrolSpeed = 2f;
+    [SerializeField] private float waitTime = 1.5f;
+    [SerializeField] private float arriveDistance = 0.3f;
+    [SerializeField] private bool faceWaypointDirection = false;
 
     [Header("Sospecha (estado Alerta)")]
-    [SerializeField] private float suspicionFillTime = 3f;      // Segundos de vista continua para llenar el medidor (a velocidad normal)
-    [SerializeField] private float closeRateMultiplier = 2f;    // Multiplicador cuando estás cerca (se llena más rápido)
-    [SerializeField] private float farRateMultiplier = 0.5f;    // Multiplicador cuando estás lejos (se llena más lento)
-    [SerializeField] private float suspicionDecayTime = 8f;     // Segundos para que el medidor baje de 1 a 0 si no ve nada
-    [SerializeField] private float lookTurnSpeed = 120f;        // Qué tan rápido gira hacia donde te vio (grados/s)
-    [SerializeField] private float alertLoseTime = 0.6f;        // Segundos sin verte antes de ir a revisar
-    [SerializeField, Range(0f, 1f)] private float investigateThreshold = 0.2f; // Sospecha mínima para molestarse en revisar
+    [SerializeField] private float suspicionFillTime = 3f;
+    [SerializeField] private float closeRateMultiplier = 2f;
+    [SerializeField] private float farRateMultiplier = 0.5f;
+    [SerializeField] private float suspicionDecayTime = 8f;
+    [SerializeField] private float lookTurnSpeed = 120f;
+    [SerializeField] private float alertLoseTime = 0.6f;
+    [SerializeField, Range(0f, 1f)] private float investigateThreshold = 0.2f;
 
     [Header("Investigar")]
-    [SerializeField] private float reactionPause = 1f;          // Segundos que se frena a pensar "¿qué fue eso?" al ver algo nuevo
-    [SerializeField] private float investigateSpeed = 3f;       // Velocidad al ir a revisar
-    [SerializeField] private float searchTime = 4f;             // Segundos que mira alrededor al llegar
-    [SerializeField] private float searchSweepAngle = 60f;      // Cuánto gira la cabeza a cada lado
-    [SerializeField] private float searchSweepSpeed = 1.5f;     // Qué tan rápido barre con la vista
+    [SerializeField] private float reactionPause = 1f;
+    [SerializeField] private float investigateSpeed = 3f;
+    [SerializeField] private float searchTime = 4f;
+    [SerializeField] private float searchSweepAngle = 60f;
+    [SerializeField] private float searchSweepSpeed = 1.5f;
 
     [Header("Persecución")]
-    [SerializeField] private float chaseSpeed = 3.5f;      // Velocidad al perseguir
-    [SerializeField] private float catchDistance = 1.3f;   // A esta distancia te "atrapa"
-    [SerializeField] private float loseSightTime = 2f;     // Segundos sin verte antes de dejar de correr
+    [SerializeField] private float chaseSpeed = 3.5f;
+    [SerializeField] private float catchDistance = 1.3f;
+    [SerializeField] private float loseSightTime = 2f;
 
     [Header("Oído")]
-    [SerializeField] private float noiseSuspicionStep = 0.1f;   // Cuánto sube la sospecha por cada ruido oído
-    [SerializeField, Range(0f, 1f)] private float noiseSuspicionCap = 0.6f; // Solo con ruido nunca llega a estar seguro
-    [SerializeField] private float noiseMemory = 1.5f;          // Ruidos separados por menos que esto cuentan como el mismo
+    [SerializeField] private float noiseSuspicionStep = 0.1f;
+    [SerializeField, Range(0f, 1f)] private float noiseSuspicionCap = 0.6f;
+    [SerializeField] private float noiseMemory = 1.5f;
 
     [Header("Feedback en el cuerpo (opcional: los conos ya muestran el estado)")]
     [SerializeField] private bool showBodyColor = false;
-    [SerializeField] private Renderer bodyRenderer;        // Si está vacío lo busca solo
+    [SerializeField] private Renderer bodyRenderer;
     [SerializeField] private Color alertColor = Color.yellow;
     [SerializeField] private Color investigateColor = new Color(1f, 0.6f, 0f);
     [SerializeField] private Color chaseColor = Color.white;
 
-    // Lo que pueden leer otros scripts
     public EnemyState CurrentState { get; private set; } = EnemyState.Patrol;
     public event Action<EnemyState> StateChanged;
 
@@ -56,24 +55,20 @@ public class EnemyAI : MonoBehaviour
     private NavMeshAgent agent;
     private EnemyVision vision;
 
-    // Patrulla
-    private int currentIndex;      // Waypoint AL QUE se dirige (o en el que espera)
+    private int currentIndex;
     private bool waiting;
     private float waitTimer;
 
-    // Sospecha
     private float suspicion;
     private float alertLostTimer;
-    private Vector3 lastKnownPosition;  // Dónde vio al jugador por última vez
+    private Vector3 lastKnownPosition;
 
-    // Investigar
-    private bool searching;             // false = yendo al punto, true = mirando alrededor
+    private bool searching;
     private float searchTimer;
     private float searchStartYaw;
-    private float reactionTimer;        // Mayor a 0 mientras hace la pausa "¿qué fue eso?"
-    private bool wasDetected;           // Si te detectaba en el frame anterior (para saber cuándo aparece una señal NUEVA)
+    private float reactionTimer;
+    private bool wasDetected;
 
-    // Persecución
     private float timeSinceSeen;
 
     private float lastNoiseTime = -999f;
@@ -107,7 +102,6 @@ public class EnemyAI : MonoBehaviour
 
     private void Update()
     {
-        // El enemigo detecta al jugador si lo ve O si está en su zona de cercanía
         bool detected = vision.CanSeePlayer || vision.PlayerInProximity;
         if (detected) lastKnownPosition = vision.Player.position;
 
@@ -134,11 +128,8 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    // ---------------- MEDIDOR DE SOSPECHA ----------------
-
     private void UpdateSuspicion(bool detected)
     {
-        // Durante la persecución el medidor queda al máximo
         if (CurrentState == EnemyState.Chase)
         {
             if (detected) suspicion = 1f;
@@ -147,13 +138,12 @@ public class EnemyAI : MonoBehaviour
 
         if (detected)
             suspicion += GetDetectionRate() * Time.deltaTime;
-        else if (CurrentState != EnemyState.Investigate) // Mientras investiga sigue desconfiado: no baja
+        else if (CurrentState != EnemyState.Investigate)
             suspicion -= Time.deltaTime / suspicionDecayTime;
 
         suspicion = Mathf.Clamp01(suspicion);
     }
 
-    // Qué tan rápido sube el medidor: más rápido cuanto más cerca estás
     private float GetDetectionRate()
     {
         float multiplier;
@@ -165,21 +155,18 @@ public class EnemyAI : MonoBehaviour
         else
         {
             float distance = Vector3.Distance(transform.position, vision.Player.position);
-            float t = Mathf.Clamp01(distance / vision.ViewDistance); // 0 = pegado, 1 = al límite
+            float t = Mathf.Clamp01(distance / vision.ViewDistance);
             multiplier = Mathf.Lerp(closeRateMultiplier, farRateMultiplier, t);
         }
 
         return multiplier / suspicionFillTime;
     }
 
-    // ---------------- CAMBIO DE ESTADO ----------------
-
     private void SetState(EnemyState newState)
     {
         if (newState == CurrentState) return;
         CurrentState = newState;
 
-        // Lo que pasa UNA sola vez al entrar en cada estado
         switch (newState)
         {
             case EnemyState.Patrol:
@@ -187,20 +174,19 @@ public class EnemyAI : MonoBehaviour
                 agent.speed = patrolSpeed;
                 searching = false;
                 waiting = false;
-                // currentIndex ya apunta al waypoint correcto: retoma su camino hacia ahí
+
                 agent.SetDestination(waypoints[currentIndex].position);
                 break;
 
             case EnemyState.Alert:
-                // Si lo interrumpimos mientras esperaba en un waypoint, ya pasa al siguiente:
-                // así no da media vuelta hacia el punto que acababa de dejar.
+
                 if (waiting)
                 {
                     waiting = false;
                     currentIndex = (currentIndex + 1) % waypoints.Length;
                 }
-                agent.isStopped = true;          // Frena...
-                agent.velocity = Vector3.zero;   // ...en seco
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
                 alertLostTimer = 0f;
                 break;
 
@@ -218,7 +204,6 @@ public class EnemyAI : MonoBehaviour
                 agent.speed = chaseSpeed;
                 timeSinceSeen = 0f;
 
-                // Avisamos al GameManager (él decide si detectar ya es derrota)
                 if (GameManager.Instance != null)
                     GameManager.Instance.OnPlayerDetected();
                 break;
@@ -228,11 +213,8 @@ public class EnemyAI : MonoBehaviour
         StateChanged?.Invoke(newState);
     }
 
-    // ---------------- PATRULLA ----------------
-
     private void Patrol()
     {
-        // Mientras el agente calcula la ruta, esperamos
         if (agent.pathPending) return;
 
         if (waiting)
@@ -248,14 +230,13 @@ public class EnemyAI : MonoBehaviour
             if (waitTimer <= 0f)
             {
                 waiting = false;
-                // Pasamos al siguiente punto (al llegar al último, vuelve al primero)
+
                 currentIndex = (currentIndex + 1) % waypoints.Length;
                 agent.SetDestination(waypoints[currentIndex].position);
             }
             return;
         }
 
-        // ¿Llegamos al waypoint actual?
         if (agent.remainingDistance <= agent.stoppingDistance + arriveDistance)
         {
             waiting = true;
@@ -263,14 +244,10 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    // ---------------- ALERTA ----------------
-
     private void Alert(bool detected)
     {
-        // Parado, mirando hacia donde vio algo
         LookTowards(lastKnownPosition);
 
-        // Medidor lleno: está seguro
         if (suspicion >= 1f)
         {
             SetState(EnemyState.Chase);
@@ -283,8 +260,6 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        // Dejó de verte. Espera un instante y decide:
-        // ¿vio suficiente como para ir a revisar, o fue un descuido?
         alertLostTimer += Time.deltaTime;
         if (alertLostTimer >= alertLoseTime)
         {
@@ -303,32 +278,25 @@ public class EnemyAI : MonoBehaviour
             transform.rotation, targetRotation, lookTurnSpeed * Time.deltaTime);
     }
 
-    // ---------------- INVESTIGAR ----------------
-
     private void Investigate(bool detected)
     {
-        // ¿Es una señal NUEVA? (antes no te veía y ahora sí)
         bool newSighting = detected && !wasDetected;
         wasDetected = detected;
 
-        // Si el medidor se llenó, ahora sí está seguro
         if (detected && suspicion >= 1f)
         {
             SetState(EnemyState.Chase);
             return;
         }
 
-        // Señal nueva: se frena un momento a pensar "¿qué fue eso?"
         if (newSighting)
             StartReaction();
 
-        // Durante la pausa: parado, mirando hacia donde te vio
         if (reactionTimer > 0f)
         {
             reactionTimer -= Time.deltaTime;
             LookTowards(lastKnownPosition);
 
-            // Terminó la pausa: ahora sí avanza hacia el punto más reciente
             if (reactionTimer <= 0f)
             {
                 agent.isStopped = false;
@@ -337,7 +305,6 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        // Ya pasó la pausa y sigue viéndote: avanza hacia el punto actualizado
         if (detected)
         {
             searching = false;
@@ -346,7 +313,6 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        // Fase 1: caminar hasta el último punto donde te vio
         if (!searching)
         {
             if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + arriveDistance)
@@ -360,12 +326,10 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        // Fase 2: mirar alrededor (barrido suave a izquierda y derecha)
         searchTimer += Time.deltaTime;
         float sweep = Mathf.Sin(searchTimer * searchSweepSpeed) * searchSweepAngle;
         transform.rotation = Quaternion.Euler(0f, searchStartYaw + sweep, 0f);
 
-        // No había nada: vuelve a patrullar
         if (searchTimer >= searchTime)
             SetState(EnemyState.Patrol);
     }
@@ -373,12 +337,10 @@ public class EnemyAI : MonoBehaviour
     private void StartReaction()
     {
         reactionTimer = reactionPause;
-        searching = false;               // Si estaba mirando alrededor, deja de hacerlo
+        searching = false;
         agent.isStopped = true;
         agent.velocity = Vector3.zero;
     }
-
-    // ---------------- OÍDO ----------------
 
     public void HearNoise(Vector3 position)
     {
@@ -395,7 +357,6 @@ public class EnemyAI : MonoBehaviour
 
         if (CurrentState == EnemyState.Patrol)
         {
-            // Si estaba esperando en un waypoint, al volver sigue con el siguiente
             if (waiting)
             {
                 waiting = false;
@@ -407,7 +368,6 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
-        // Ya investigando: un ruido nuevo lo frena a pensar; ruidos seguidos solo actualizan el destino
         if (freshNoise)
         {
             StartReaction();
@@ -420,29 +380,23 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    // ---------------- PERSECUCIÓN ----------------
-
     private void Chase(bool detected)
     {
         timeSinceSeen = detected ? 0f : timeSinceSeen + Time.deltaTime;
 
-        // Va hacia donde lo vio por última vez (no "adivina" dónde está ahora)
         SetDestinationSafe(lastKnownPosition);
 
-        // ¿Nos alcanzó?
         float distanceToPlayer = Vector3.Distance(transform.position, vision.Player.position);
         if (distanceToPlayer <= catchDistance && !vision.IsPlayerHidden && GameManager.Instance != null)
             GameManager.Instance.Lose("¡TE ATRAPARON!");
 
-        // Te perdió: no vuelve directo a patrullar, va a revisar el último punto
         if (timeSinceSeen >= loseSightTime)
         {
-            suspicion = Mathf.Min(suspicion, 0.6f); // Sigue alerta, pero ya no está "seguro"
+            suspicion = Mathf.Min(suspicion, 0.6f);
             SetState(EnemyState.Investigate);
         }
     }
 
-    // Manda al agente a un punto, ajustándolo a la zona caminable más cercana del NavMesh
     private void SetDestinationSafe(Vector3 target)
     {
         if (NavMesh.SamplePosition(target, out NavMeshHit hit, 3f, NavMesh.AllAreas))
@@ -451,22 +405,19 @@ public class EnemyAI : MonoBehaviour
             agent.SetDestination(target);
     }
 
-    // ---------------- FEEDBACK ----------------
-
     private void ApplyStateColor()
     {
         if (!showBodyColor || bodyRenderer == null) return;
 
         switch (CurrentState)
         {
-            case EnemyState.Patrol: bodyRenderer.material.color = patrolColor; break;
-            case EnemyState.Alert: bodyRenderer.material.color = alertColor; break;
+            case EnemyState.Patrol:      bodyRenderer.material.color = patrolColor;      break;
+            case EnemyState.Alert:       bodyRenderer.material.color = alertColor;       break;
             case EnemyState.Investigate: bodyRenderer.material.color = investigateColor; break;
-            case EnemyState.Chase: bodyRenderer.material.color = chaseColor; break;
+            case EnemyState.Chase:       bodyRenderer.material.color = chaseColor;       break;
         }
     }
 
-    // Dibuja la ruta en el editor (solo se ve en la Scene view)
     private void OnDrawGizmosSelected()
     {
         if (waypoints == null || waypoints.Length == 0) return;
@@ -483,7 +434,6 @@ public class EnemyAI : MonoBehaviour
                 Gizmos.DrawLine(waypoints[i].position, next.position);
         }
 
-        // Último punto donde vio al jugador (solo en juego)
         if (Application.isPlaying)
         {
             Gizmos.color = Color.magenta;

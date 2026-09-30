@@ -15,7 +15,7 @@ public class PlayerStealth : MonoBehaviour
     [SerializeField] private float crouchNoise = 2f;
     [SerializeField] private float walkNoise = 5f;
     [SerializeField] private float runNoise = 10f;
-    [SerializeField] private float noiseInterval = 0.3f;    // Cada cuánto emite ruido mientras se mueve
+    [SerializeField] private float noiseInterval = 0.3f;
 
     [Header("Agacharse")]
     [SerializeField, Range(0.4f, 1f)] private float crouchHeightScale = 0.65f;
@@ -121,7 +121,6 @@ public class PlayerStealth : MonoBehaviour
         if (crouching == value) return;
         crouching = value;
 
-        // La cápsula mide 2 * escala: al cambiar la escala movemos el centro para que los pies queden apoyados
         float oldScaleY = transform.localScale.y;
         float newScaleY = value ? standingScaleY * crouchHeightScale : standingScaleY;
 
@@ -140,7 +139,6 @@ public class PlayerStealth : MonoBehaviour
         Shader shader = Shader.Find("Sprites/Default");
         if (shader == null) return;
 
-        // Objeto suelto (no hijo del jugador) para que PlayerHiding no lo oscurezca junto con el cuerpo
         GameObject ringObject = new GameObject("AnilloRuido");
         ringObject.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 

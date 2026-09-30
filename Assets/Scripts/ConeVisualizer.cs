@@ -1,24 +1,12 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-/// <summary>
-/// Dibuja el cono de visión del enemigo sobre el piso.
-///
-///  - CONO BASE: cambia de color según el estado (patrulla / alerta / investiga / persigue).
-///  - RELLENO:   crece desde el enemigo hacia afuera según su medidor de sospecha.
-///               Cuando llega al borde del cono, el enemigo está seguro de haberte visto.
-///
-/// La forma del cono se recorta contra paredes y cajas con Raycasts, igual que la visión real,
-/// así lo que ves en pantalla es exactamente lo que el enemigo puede ver.
-///
-/// Este script solo muestra información: no decide nada ni modifica al enemigo.
-/// </summary>
 [RequireComponent(typeof(EnemyVision), typeof(EnemyAI), typeof(NavMeshAgent))]
 public class ConeVisualizer : MonoBehaviour
 {
     [Header("Malla")]
-    [SerializeField, Range(10, 120)] private int rayCount = 50;   // Más rayos = borde más suave (y más costoso)
-    [SerializeField] private float floorOffset = 0.03f;           // Altura sobre el piso, para que no parpadee
+    [SerializeField, Range(10, 120)] private int rayCount = 50;
+    [SerializeField] private float floorOffset = 0.03f;
 
     [Header("Colores del cono según el estado")]
     [SerializeField] private Color patrolColor = new Color(0.2f, 1f, 0.45f);
@@ -29,7 +17,7 @@ public class ConeVisualizer : MonoBehaviour
     [Header("Transparencia y suavizado")]
     [SerializeField, Range(0f, 1f)] private float coneAlpha = 0.18f;
     [SerializeField, Range(0f, 1f)] private float fillAlpha = 0.45f;
-    [SerializeField] private float colorLerpSpeed = 8f;           // Qué tan rápido cambia de color
+    [SerializeField] private float colorLerpSpeed = 8f;
 
     private EnemyVision vision;
     private EnemyAI ai;
@@ -55,7 +43,7 @@ public class ConeVisualizer : MonoBehaviour
         ai = GetComponent<EnemyAI>();
         agent = GetComponent<NavMeshAgent>();
 
-        Shader shader = Shader.Find("Sprites/Default"); // Transparente y sin luces: funciona en URP y Built-in
+        Shader shader = Shader.Find("Sprites/Default");
         if (shader == null)
         {
             Debug.LogError("ConeVisualizer: no se encontró el shader 'Sprites/Default'.", this);
@@ -66,7 +54,7 @@ public class ConeVisualizer : MonoBehaviour
         BuildMeshes();
 
         coneMaterial = new Material(shader) { renderQueue = 3000 };
-        fillMaterial = new Material(shader) { renderQueue = 3001 }; // Se dibuja encima del cono base
+        fillMaterial = new Material(shader) { renderQueue = 3001 };
 
         CreateLayer("ConoVision", coneMesh, coneMaterial);
         fillRenderer = CreateLayer("ConoRelleno", fillMesh, fillMaterial);
@@ -74,7 +62,6 @@ public class ConeVisualizer : MonoBehaviour
         currentColor = patrolColor;
     }
 
-    // Se ejecuta después de que el enemigo ya se movió y giró en este frame
     private void LateUpdate()
     {
         ComputeRays();
@@ -82,14 +69,11 @@ public class ConeVisualizer : MonoBehaviour
         UpdateColors();
     }
 
-    // ---------------- CONSTRUCCIÓN ----------------
-
     private void BuildMeshes()
     {
         rayDirections = new Vector3[rayCount + 1];
         rayDistances = new float[rayCount + 1];
 
-        // 1 vértice en el enemigo + 1 por cada rayo. Los triángulos forman un "abanico".
         int vertexCount = rayCount + 2;
         coneVertices = new Vector3[vertexCount];
         fillVertices = new Vector3[vertexCount];
@@ -109,13 +93,12 @@ public class ConeVisualizer : MonoBehaviour
     private Mesh CreateMesh(string meshName, int vertexCount, int[] triangles)
     {
         Mesh mesh = new Mesh { name = meshName };
-        mesh.MarkDynamic(); // Avisa a Unity que la vamos a modificar en cada frame
+        mesh.MarkDynamic();
         mesh.vertices = new Vector3[vertexCount];
         mesh.triangles = triangles;
         return mesh;
     }
 
-    // Crea un objeto hijo con la malla, para poder dibujarla
     private MeshRenderer CreateLayer(string layerName, Mesh mesh, Material material)
     {
         GameObject layer = new GameObject(layerName);
@@ -129,9 +112,6 @@ public class ConeVisualizer : MonoBehaviour
         return meshRenderer;
     }
 
-    // ---------------- CÁLCULO DEL CONO ----------------
-
-    // Tira rayos en abanico (mismo origen, ángulo y alcance que EnemyVision)
     private void ComputeRays()
     {
         Vector3 eye = transform.position + Vector3.up * vision.EyeHeight;
@@ -148,7 +128,6 @@ public class ConeVisualizer : MonoBehaviour
         }
     }
 
-    // Hasta dónde llega el rayo antes de chocar con algo que tape la vista
     private float GetClearDistance(Vector3 origin, Vector3 direction)
     {
         float maxDistance = vision.ViewDistance;
@@ -162,9 +141,9 @@ public class ConeVisualizer : MonoBehaviour
         {
             Collider hitCollider = hitBuffer[i].collider;
 
-            if (hitCollider.transform.IsChildOf(transform)) continue;               // El propio enemigo
-            if (player != null && hitCollider.transform.IsChildOf(player)) continue; // El jugador no recorta el cono
-            if (hitCollider.GetComponentInParent<EnemyAI>() != null) continue;       // Otros enemigos tampoco
+            if (hitCollider.transform.IsChildOf(transform)) continue;
+            if (player != null && hitCollider.transform.IsChildOf(player)) continue;
+            if (hitCollider.GetComponentInParent<EnemyAI>() != null) continue;
 
             nearest = Mathf.Min(nearest, hitBuffer[i].distance);
         }
@@ -188,7 +167,6 @@ public class ConeVisualizer : MonoBehaviour
             Vector3 direction = rayDirections[i];
             float distance = rayDistances[i];
 
-            // Los vértices se guardan en coordenadas locales del enemigo
             coneVertices[i + 1] = transform.InverseTransformPoint(coneOrigin + direction * distance);
             fillVertices[i + 1] = transform.InverseTransformPoint(fillOrigin + direction * (distance * suspicion));
         }
@@ -200,11 +178,8 @@ public class ConeVisualizer : MonoBehaviour
         fillMesh.RecalculateBounds();
     }
 
-    // ---------------- COLORES ----------------
-
     private void UpdateColors()
     {
-        // Cono base: color del estado, con transición suave
         currentColor = Color.Lerp(currentColor, GetStateColor(),
                                   1f - Mathf.Exp(-colorLerpSpeed * Time.deltaTime));
 
@@ -212,7 +187,6 @@ public class ConeVisualizer : MonoBehaviour
         coneColor.a = coneAlpha;
         coneMaterial.color = coneColor;
 
-        // Relleno: de amarillo a rojo a medida que sube la sospecha
         Color fillColor = Color.Lerp(alertColor, chaseColor, ai.Suspicion);
         fillColor.a = fillAlpha;
         fillMaterial.color = fillColor;
@@ -231,7 +205,6 @@ public class ConeVisualizer : MonoBehaviour
         }
     }
 
-    // Limpieza: las mallas y materiales creados por código no se borran solos
     private void OnDestroy()
     {
         if (coneMesh != null) Destroy(coneMesh);

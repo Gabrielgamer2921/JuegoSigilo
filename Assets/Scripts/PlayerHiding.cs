@@ -1,23 +1,16 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// Maneja el escondite del jugador.
-///  - Si estás dentro de una zona (HidingSpot) y apretás E, te escondés.
-///  - Escondido: no te movés y los enemigos no te ven ni te sienten.
-///  - Apretás E de nuevo para salir.
-/// Otros scripts (EnemyVision, PlayerMovement) leen IsHidden para saber qué hacer.
-/// </summary>
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerHiding : MonoBehaviour
 {
     [Header("Apariencia mientras está escondido")]
-    [SerializeField, Range(0f, 1f)] private float hiddenDarkness = 0.6f; // 0 = igual, 1 = negro
+    [SerializeField, Range(0f, 1f)] private float hiddenDarkness = 0.6f;
 
     public bool IsHidden { get; private set; }
 
     private Rigidbody rb;
-    private HidingSpot nearbySpot;   // Zona en la que estamos parados (si hay alguna)
+    private HidingSpot nearbySpot;
 
     private Renderer[] renderers;
     private Color[] originalColors;
@@ -27,14 +20,12 @@ public class PlayerHiding : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
 
-        // Guardamos los colores originales para poder oscurecer y restaurar
         renderers = GetComponentsInChildren<Renderer>();
         originalColors = new Color[renderers.Length];
         for (int i = 0; i < renderers.Length; i++)
             originalColors[i] = renderers[i].material.color;
     }
 
-    // HidingSpot nos avisa cuando entramos o salimos de una zona
     public void SetNearbySpot(HidingSpot spot) { nearbySpot = spot; }
     public void ClearNearbySpot(HidingSpot spot)
     {
@@ -43,7 +34,7 @@ public class PlayerHiding : MonoBehaviour
 
     private void Update()
     {
-        if (Time.timeScale == 0f) return; // Partida terminada
+        if (Time.timeScale == 0f) return;
 
         Keyboard kb = Keyboard.current;
         if (kb == null || !kb.eKey.wasPressedThisFrame) return;
@@ -56,7 +47,6 @@ public class PlayerHiding : MonoBehaviour
     {
         IsHidden = true;
 
-        // Nos ubicamos en el centro de la zona (conservando la altura)
         Vector3 position = spot.HidePosition;
         position.y = transform.position.y;
         rb.position = position;
@@ -72,7 +62,6 @@ public class PlayerHiding : MonoBehaviour
         SetTint(false);
     }
 
-    // Oscurece al jugador mientras está escondido (feedback visual)
     private void SetTint(bool hidden)
     {
         for (int i = 0; i < renderers.Length; i++)
@@ -83,7 +72,6 @@ public class PlayerHiding : MonoBehaviour
         }
     }
 
-    // Mensaje en pantalla (después lo reemplazamos por una UI real)
     private void OnGUI()
     {
         if (Time.timeScale == 0f) return;

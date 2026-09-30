@@ -14,13 +14,11 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 moveInput; // x = izquierda/derecha, y = adelante/atrás
     private PlayerHiding hiding; // Si está escondido, no se mueve
     private PlayerStealth stealth; // Define la velocidad según caminar, correr o agacharse
-    private PlayerWallKnock wallKnock; // Pegado a una pared, no se mueve
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         hiding = GetComponent<PlayerHiding>();
-        wallKnock = GetComponent<PlayerWallKnock>();
 
         stealth = GetComponent<PlayerStealth>();
         if (stealth == null)
@@ -44,9 +42,6 @@ public class PlayerMovement : MonoBehaviour
 
         // Escondido: no se mueve (moveInput queda en cero)
         if (hiding != null && hiding.IsHidden) return;
-
-        // Pegado a una pared: tampoco se mueve
-        if (wallKnock != null && wallKnock.IsAttached) return;
 
         Keyboard kb = Keyboard.current;
         if (kb == null) return;
