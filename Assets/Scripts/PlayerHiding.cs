@@ -39,8 +39,16 @@ public class PlayerHiding : MonoBehaviour
         Keyboard kb = Keyboard.current;
         if (kb == null || !kb.eKey.wasPressedThisFrame) return;
 
-        if (IsHidden) ExitHiding();
-        else if (nearbySpot != null) EnterHiding(nearbySpot);
+        if (IsHidden)
+        {
+            ExitHiding();
+            AudioManager.PlayHide();
+        }
+        else if (nearbySpot != null)
+        {
+            EnterHiding(nearbySpot);
+            AudioManager.PlayHide();
+        }
     }
 
     private void EnterHiding(HidingSpot spot)

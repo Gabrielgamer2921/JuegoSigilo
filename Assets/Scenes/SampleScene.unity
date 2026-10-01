@@ -365,6 +365,68 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1965621557}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &68750843
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 68750845}
+  - component: {fileID: 68750844}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &68750844
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 68750843}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 779d95166b367934aafe426f23cb4435, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AudioManager
+  ambientMusic: {fileID: 8300000, guid: f89b58e8af929e44aa52147567069886, type: 3}
+  chaseMusic: {fileID: 8300000, guid: 0a9a8aa8ad679b745b80a9793e33a172, type: 3}
+  musicVolume: 0.4
+  musicFadeTime: 1.5
+  alertSound: {fileID: 8300000, guid: 3e6d403ea23673446b2945c78c76d6df, type: 3}
+  detectedSound: {fileID: 8300000, guid: 37a8134d1efbd6f4095a6f131bb60066, type: 3}
+  enemyVolume: 1
+  whistleSound: {fileID: 8300000, guid: aef9c63591d68754bacc47c8dcdf3c0b, type: 3}
+  hideSound: {fileID: 8300000, guid: cbccf2959f7b0eb4da99d7bde0d27d1b, type: 3}
+  footstepSounds:
+  - {fileID: 8300000, guid: 30c5653a7274ccd42ad39b318df6959f, type: 3}
+  - {fileID: 8300000, guid: 30c5653a7274ccd42ad39b318df6959f, type: 3}
+  - {fileID: 8300000, guid: 30c5653a7274ccd42ad39b318df6959f, type: 3}
+  playerVolume: 0.8
+  footstepPitchVariation: 0.08
+  winSound: {fileID: 8300000, guid: 5261f41acb9249641bb518d6621f3d82, type: 3}
+  loseSound: {fileID: 8300000, guid: 09c016e9a4ebbcb4d8bcefce2254e693, type: 3}
+  resultVolume: 1
+--- !u!4 &68750845
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 68750843}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4.1056, y: -0, z: -4.41}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &75018750
 GameObject:
   m_ObjectHideFlags: 0
@@ -2167,7 +2229,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 23800000, guid: 9a189731e714119489fb79d63b791c17, type: 2}
+  m_NavMeshData: {fileID: 0}
   m_BuildHeightMesh: 0
 --- !u!1 &369675095
 GameObject:
@@ -3294,8 +3356,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHearing
   hearingMultiplier: 1
-  wallMuffle: 0.5
-  earHeight: 0.5
 --- !u!114 &637979218
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3335,6 +3395,7 @@ MonoBehaviour:
   noiseSuspicionStep: 0.1
   noiseSuspicionCap: 0.6
   noiseMemory: 1.5
+  alertSoundCooldown: 1.2
   showBodyColor: 0
   bodyRenderer: {fileID: 0}
   alertColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
@@ -4006,8 +4067,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHearing
   hearingMultiplier: 1
-  wallMuffle: 0.5
-  earHeight: 0.5
 --- !u!114 &764664038
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4047,6 +4106,7 @@ MonoBehaviour:
   noiseSuspicionStep: 0.1
   noiseSuspicionCap: 0.6
   noiseMemory: 1.5
+  alertSoundCooldown: 1.2
   showBodyColor: 0
   bodyRenderer: {fileID: 0}
   alertColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
@@ -7250,8 +7310,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHearing
   hearingMultiplier: 1
-  wallMuffle: 0.5
-  earHeight: 0.5
 --- !u!114 &1423965763
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7289,6 +7347,7 @@ MonoBehaviour:
   noiseSuspicionStep: 0.1
   noiseSuspicionCap: 0.6
   noiseMemory: 1.5
+  alertSoundCooldown: 1.2
   showBodyColor: 0
   bodyRenderer: {fileID: 0}
   alertColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
@@ -10040,3 +10099,4 @@ SceneRoots:
   - {fileID: 75018751}
   - {fileID: 368588167}
   - {fileID: 1156718552}
+  - {fileID: 68750845}

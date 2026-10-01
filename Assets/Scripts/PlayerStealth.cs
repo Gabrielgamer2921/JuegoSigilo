@@ -38,6 +38,7 @@ public class PlayerStealth : MonoBehaviour
     private bool crouching;
     private float standingScaleY;
     private float noiseTimer;
+    private float stepTimer;
 
     private LineRenderer ring;
     private float ringRadius;
@@ -103,7 +104,41 @@ public class PlayerStealth : MonoBehaviour
             noiseTimer = 0f;
         }
 
+        if (moving)
+        {
+            stepTimer -= Time.deltaTime;
+            if (stepTimer <= 0f)
+            {
+                AudioManager.PlayFootstep(GetStepVolume(CurrentStance));
+                stepTimer = GetStepInterval(CurrentStance);
+            }
+        }
+        else
+        {
+            stepTimer = 0f;
+        }
+
         UpdateRing();
+    }
+
+    private float GetStepInterval(Stance stance)
+    {
+        switch (stance)
+        {
+            case Stance.Crouch: return 0.65f;
+            case Stance.Run:    return 0.3f;
+            default:            return 0.45f;
+        }
+    }
+
+    private float GetStepVolume(Stance stance)
+    {
+        switch (stance)
+        {
+            case Stance.Crouch: return 0.25f;
+            case Stance.Run:    return 1f;
+            default:            return 0.6f;
+        }
     }
 
     private float GetNoiseRadius(Stance stance)

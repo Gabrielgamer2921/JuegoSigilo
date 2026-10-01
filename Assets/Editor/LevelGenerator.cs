@@ -22,10 +22,6 @@ public static class LevelGenerator
         public Materials mats;
     }
 
-    // ================================================================
-    //  MENÚ
-    // ================================================================
-
     [MenuItem("Sigilo/Generar nivel (Etapa 1)")]
     public static void GenerateStage1()
     {
@@ -69,7 +65,6 @@ public static class LevelGenerator
         Transform g = level.geometry;
         BuildFloorAndBorders(level);
 
-        // Zona de inicio (sur) | tres carriles (oeste, centro, este) | sector norte con la meta
         Wall("Muro_Sur_A", g, -8f, -9f, 8f, 1f, m.wall);
         Wall("Muro_Sur_B", g, 8f, -9f, 8f, 1f, m.wall);
         Wall("Muro_Norte_A", g, -8f, 9f, 8f, 1f, m.wall);
@@ -77,7 +72,6 @@ public static class LevelGenerator
         Wall("Divisor_Oeste", g, -8f, 0f, 1f, 19f, m.wall);
         Wall("Divisor_Este", g, 8f, 0f, 1f, 19f, m.wall);
 
-        // Sala de la meta (x de 8 a 20): una sola puerta desde la antesala
         Wall("Muro_Meta_Sur", g, 8f, 11.5f, 1f, 5f, m.wall);
         Wall("Muro_Meta_Norte", g, 8f, 19f, 1f, 2f, m.wall);
 
@@ -112,18 +106,15 @@ public static class LevelGenerator
         CreateStart(level, startPos);
         CreateGoal(level, new Vector3(17.5f, 1f, 17.5f));
 
-        // Enemigo A: patrulla lineal por el carril central
         Transform[] routeCenter = CreateRoute(level, "Central",
             new Vector3(0f, 0f, -6f), new Vector3(0f, 0f, 6f));
         CreateEnemy(level, "Enemigo_Central", new Vector3(0f, 1f, -6f), 0f, routeCenter, 10f, 90f);
 
-        // Enemigo B: patrulla circular alrededor de la isla del carril este
         Transform[] routeEast = CreateRoute(level, "Este",
             new Vector3(11f, 0f, -5f), new Vector3(17f, 0f, -5f),
             new Vector3(17f, 0f, 5f), new Vector3(11f, 0f, 5f));
         CreateEnemy(level, "Enemigo_Este", new Vector3(11f, 1f, -5f), 90f, routeEast, 10f, 90f);
 
-        // Enemigo C: guardia fijo en la sala de la meta, gira entre oeste y sur
         Transform[] routeGuard = CreateGuardRoute(level, "Guardia",
             new Vector3(13f, 0f, 16f), 270f, 225f, 180f, 225f);
         GameObject guard = CreateEnemy(level, "Guardia_Meta", new Vector3(13f, 1f, 16f), 270f, routeGuard, 9f, 70f);
@@ -154,10 +145,6 @@ public static class LevelGenerator
         }
     }
 
-    // ================================================================
-    //  ARMADO COMÚN DEL NIVEL
-    // ================================================================
-
     private static Level BeginLevel()
     {
         GameObject existing = GameObject.Find(RootName);
@@ -182,7 +169,6 @@ public static class LevelGenerator
         level.hiding = CreateGroup("Escondites", level.root);
         level.enemies = CreateGroup("Enemigos", level.root);
 
-        // Solo "Geometria" se hornea: escondites, meta, jugador y enemigos quedan fuera del NavMesh
         NavMeshSurface surface = level.geometry.gameObject.AddComponent<NavMeshSurface>();
         surface.collectObjects = CollectObjects.Children;
 
@@ -207,6 +193,7 @@ public static class LevelGenerator
         GameObject player = EnsurePlayer(startPos + Vector3.up, level.mats.player, level.mats.nose);
         EnsureCamera(player.transform);
         EnsureGameManager();
+        EnsureAudioManager();
 
         AssetDatabase.SaveAssets();
         EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
@@ -215,10 +202,6 @@ public static class LevelGenerator
         Debug.Log("Nivel generado. ÚLTIMO PASO: con 'Geometria' seleccionado, " +
                   "apretá el botón Bake del componente Nav Mesh Surface.");
     }
-
-    // ================================================================
-    //  OBJETOS DEL NIVEL
-    // ================================================================
 
     private static void CreateStart(Level level, Vector3 position)
     {
@@ -286,10 +269,6 @@ public static class LevelGenerator
         return enemy;
     }
 
-    // ================================================================
-    //  PRIMITIVAS
-    // ================================================================
-
     private static Transform CreateGroup(string name, Transform parent)
     {
         GameObject go = new GameObject(name);
@@ -327,7 +306,6 @@ public static class LevelGenerator
         return Box(name, parent, new Vector3(x, 1f, z), new Vector3(2f, 2f, 2f), m.crate);
     }
 
-    // Pared: se define por su centro (x, z) y su tamaño horizontal (sizeX, sizeZ)
     private static GameObject Wall(string name, Transform parent, float x, float z,
                                    float sizeX, float sizeZ, Material material)
     {
@@ -347,10 +325,6 @@ public static class LevelGenerator
         nose.GetComponent<Renderer>().sharedMaterial = material;
         Object.DestroyImmediate(nose.GetComponent<Collider>());
     }
-
-    // ================================================================
-    //  JUGADOR, CÁMARA Y GAMEMANAGER
-    // ================================================================
 
     private static GameObject EnsurePlayer(Vector3 position, Material bodyMat, Material noseMat)
     {
@@ -402,6 +376,15 @@ public static class LevelGenerator
         SetObjectField(follow, "target", playerTransform);
     }
 
+    private static void EnsureAudioManager()
+    {
+        if (Object.FindFirstObjectByType<AudioManager>() != null) return;
+
+        GameObject audio = new GameObject("AudioManager");
+        audio.AddComponent<AudioManager>();
+        Undo.RegisterCreatedObjectUndo(audio, "Crear AudioManager");
+    }
+
     private static void EnsureGameManager()
     {
         if (Object.FindFirstObjectByType<GameManager>() != null) return;
@@ -410,10 +393,6 @@ public static class LevelGenerator
         gm.AddComponent<GameManager>();
         Undo.RegisterCreatedObjectUndo(gm, "Crear GameManager");
     }
-
-    // ================================================================
-    //  ASIGNAR CAMPOS PRIVADOS ([SerializeField]) DESDE CÓDIGO DE EDITOR
-    // ================================================================
 
     private static void SetObjectField(Object component, string fieldName, Object value)
     {
@@ -446,23 +425,19 @@ public static class LevelGenerator
         so.ApplyModifiedProperties();
     }
 
-    // ================================================================
-    //  MATERIALES
-    // ================================================================
-
     private static Materials CreateMaterials()
     {
         return new Materials
         {
-            floor = GetMaterial("Piso", new Color(0.22f, 0.24f, 0.27f)),
-            wall = GetMaterial("Pared", new Color(0.45f, 0.47f, 0.50f)),
-            crate = GetMaterial("Caja", new Color(0.62f, 0.45f, 0.25f)),
+            floor  = GetMaterial("Piso",    new Color(0.22f, 0.24f, 0.27f)),
+            wall   = GetMaterial("Pared",   new Color(0.45f, 0.47f, 0.50f)),
+            crate  = GetMaterial("Caja",    new Color(0.62f, 0.45f, 0.25f)),
             player = GetMaterial("Jugador", new Color(0.20f, 0.45f, 1.00f)),
-            enemy = GetMaterial("Enemigo", new Color(0.85f, 0.15f, 0.15f)),
-            goal = GetMaterial("Meta", new Color(0.20f, 0.85f, 0.35f)),
-            start = GetMaterial("Inicio", new Color(0.40f, 0.85f, 1.00f)),
-            nose = GetMaterial("Frente", new Color(0.95f, 0.95f, 0.95f)),
-            hide = GetTransparentMaterial("Escondite", new Color(0.15f, 0.9f, 0.35f, 0.35f))
+            enemy  = GetMaterial("Enemigo", new Color(0.85f, 0.15f, 0.15f)),
+            goal   = GetMaterial("Meta",    new Color(0.20f, 0.85f, 0.35f)),
+            start  = GetMaterial("Inicio",  new Color(0.40f, 0.85f, 1.00f)),
+            nose   = GetMaterial("Frente",  new Color(0.95f, 0.95f, 0.95f)),
+            hide   = GetTransparentMaterial("Escondite", new Color(0.15f, 0.9f, 0.35f, 0.35f))
         };
     }
 
@@ -476,7 +451,6 @@ public static class LevelGenerator
 
         if (mat == null)
         {
-            // Se copia el material por defecto de un cubo para usar el shader correcto (URP o Built-in)
             GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Material defaultMat = temp.GetComponent<Renderer>().sharedMaterial;
             Object.DestroyImmediate(temp);
@@ -485,8 +459,8 @@ public static class LevelGenerator
             AssetDatabase.CreateAsset(mat, path);
         }
 
-        if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color); // URP
-        if (mat.HasProperty("_Color")) mat.SetColor("_Color", color);         // Built-in
+        if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+        if (mat.HasProperty("_Color")) mat.SetColor("_Color", color);
         EditorUtility.SetDirty(mat);
         return mat;
     }

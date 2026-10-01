@@ -40,6 +40,9 @@ public class EnemyAI : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float noiseSuspicionCap = 0.6f;
     [SerializeField] private float noiseMemory = 1.5f;
 
+    [Header("Sonido de alerta")]
+    [SerializeField] private float alertSoundCooldown = 1.2f;
+
     [Header("Feedback en el cuerpo (opcional: los conos ya muestran el estado)")]
     [SerializeField] private bool showBodyColor = false;
     [SerializeField] private Renderer bodyRenderer;
@@ -49,6 +52,7 @@ public class EnemyAI : MonoBehaviour
 
     public EnemyState CurrentState { get; private set; } = EnemyState.Patrol;
     public event Action<EnemyState> StateChanged;
+    public event Action Alerted;
 
     public float Suspicion => suspicion;
 
@@ -72,6 +76,7 @@ public class EnemyAI : MonoBehaviour
     private float timeSinceSeen;
 
     private float lastNoiseTime = -999f;
+    private float lastAlertTime = -999f;
 
     private Color patrolColor;
 
@@ -179,7 +184,6 @@ public class EnemyAI : MonoBehaviour
                 break;
 
             case EnemyState.Alert:
-
                 if (waiting)
                 {
                     waiting = false;
@@ -188,6 +192,7 @@ public class EnemyAI : MonoBehaviour
                 agent.isStopped = true;
                 agent.velocity = Vector3.zero;
                 alertLostTimer = 0f;
+                RaiseAlerted();
                 break;
 
             case EnemyState.Investigate:
@@ -340,6 +345,15 @@ public class EnemyAI : MonoBehaviour
         searching = false;
         agent.isStopped = true;
         agent.velocity = Vector3.zero;
+        RaiseAlerted();
+    }
+
+    private void RaiseAlerted()
+    {
+        if (Time.time - lastAlertTime < alertSoundCooldown) return;
+
+        lastAlertTime = Time.time;
+        Alerted?.Invoke();
     }
 
     public void HearNoise(Vector3 position)
@@ -411,10 +425,10 @@ public class EnemyAI : MonoBehaviour
 
         switch (CurrentState)
         {
-            case EnemyState.Patrol:      bodyRenderer.material.color = patrolColor;      break;
-            case EnemyState.Alert:       bodyRenderer.material.color = alertColor;       break;
+            case EnemyState.Patrol: bodyRenderer.material.color = patrolColor; break;
+            case EnemyState.Alert: bodyRenderer.material.color = alertColor; break;
             case EnemyState.Investigate: bodyRenderer.material.color = investigateColor; break;
-            case EnemyState.Chase:       bodyRenderer.material.color = chaseColor;       break;
+            case EnemyState.Chase: bodyRenderer.material.color = chaseColor; break;
         }
     }
 

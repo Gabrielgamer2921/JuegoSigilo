@@ -25,6 +25,7 @@ public class PlayerWhistle : MonoBehaviour
 
         cooldownTimer = whistleCooldown;
         NoiseSystem.Emit(transform.position, whistleRadius);
+        AudioManager.PlayWhistle();
 
         float footY = transform.position.y - transform.localScale.y + 0.05f;
         Vector3 center = new Vector3(transform.position.x, footY, transform.position.z);

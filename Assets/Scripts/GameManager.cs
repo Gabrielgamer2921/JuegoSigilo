@@ -47,6 +47,8 @@ public class GameManager : MonoBehaviour
         State = newState;
         message = text;
 
+        AudioManager.PlayResult(newState == GameState.Won);
+
         Time.timeScale = 0f;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
