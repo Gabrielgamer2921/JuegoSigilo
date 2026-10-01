@@ -9,19 +9,18 @@ public class GameManager : MonoBehaviour
     public enum GameState { Playing, Won, Lost }
 
     [Header("Reglas")]
-    [Tooltip("ON: perdés apenas te detectan (Nota 4). OFF: perdés cuando un enemigo te alcanza (Nota 7).")]
     [SerializeField] private bool loseWhenDetected = false;
 
     public GameState State { get; private set; } = GameState.Playing;
-
-    private string message;
-    private GUIStyle titleStyle;
-    private GUIStyle subStyle;
+    public string ResultMessage { get; private set; } = "";
 
     private void Awake()
     {
         Instance = this;
         Time.timeScale = 1f;
+
+        if (FindFirstObjectByType<HudUI>() == null)
+            gameObject.AddComponent<HudUI>();
     }
 
     public void Win()
@@ -45,7 +44,7 @@ public class GameManager : MonoBehaviour
         if (State != GameState.Playing) return;
 
         State = newState;
-        message = text;
+        ResultMessage = text;
 
         AudioManager.PlayResult(newState == GameState.Won);
 
@@ -62,32 +61,5 @@ public class GameManager : MonoBehaviour
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
-    }
-
-    private void OnGUI()
-    {
-        if (State == GameState.Playing) return;
-
-        if (titleStyle == null)
-        {
-            titleStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 56,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.MiddleCenter
-            };
-            subStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 24,
-                alignment = TextAnchor.MiddleCenter
-            };
-            subStyle.normal.textColor = Color.white;
-        }
-
-        titleStyle.normal.textColor = State == GameState.Won ? Color.green : Color.red;
-
-        float y = Screen.height * 0.35f;
-        GUI.Label(new Rect(0, y, Screen.width, 80), message, titleStyle);
-        GUI.Label(new Rect(0, y + 90, Screen.width, 40), "Presioná R para reiniciar", subStyle);
     }
 }

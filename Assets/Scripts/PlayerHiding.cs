@@ -14,7 +14,6 @@ public class PlayerHiding : MonoBehaviour
 
     private Renderer[] renderers;
     private Color[] originalColors;
-    private GUIStyle promptStyle;
 
     private void Awake()
     {
@@ -80,26 +79,13 @@ public class PlayerHiding : MonoBehaviour
         }
     }
 
-    private void OnGUI()
+    public string PromptText
     {
-        if (Time.timeScale == 0f) return;
-
-        string text = null;
-        if (IsHidden) text = "ESCONDIDO   -   [E] Salir";
-        else if (nearbySpot != null) text = "[E] Esconderse";
-        if (text == null) return;
-
-        if (promptStyle == null)
+        get
         {
-            promptStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 26,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.MiddleCenter
-            };
-            promptStyle.normal.textColor = Color.white;
+            if (IsHidden) return "ESCONDIDO   -   [E] Salir";
+            if (nearbySpot != null) return "[E] Esconderse";
+            return "";
         }
-
-        GUI.Label(new Rect(0, Screen.height * 0.8f, Screen.width, 50), text, promptStyle);
     }
 }

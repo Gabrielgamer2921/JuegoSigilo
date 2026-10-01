@@ -13,6 +13,8 @@ public class EnemyAI : MonoBehaviour
     [SerializeField] private float waitTime = 1.5f;
     [SerializeField] private float arriveDistance = 0.3f;
     [SerializeField] private bool faceWaypointDirection = false;
+    [SerializeField] private float idleSweepAngle = 0f;
+    [SerializeField] private float idleSweepSpeed = 0.5f;
 
     [Header("Sospecha (estado Alerta)")]
     [SerializeField] private float suspicionFillTime = 3f;
@@ -62,6 +64,7 @@ public class EnemyAI : MonoBehaviour
     private int currentIndex;
     private bool waiting;
     private float waitTimer;
+    private float idleSweepClock;
 
     private float suspicion;
     private float alertLostTimer;
@@ -228,8 +231,12 @@ public class EnemyAI : MonoBehaviour
 
             if (faceWaypointDirection)
             {
+                idleSweepClock += Time.deltaTime * idleSweepSpeed * Mathf.PI * 2f;
+                float sweepOffset = Mathf.Sin(idleSweepClock) * idleSweepAngle;
+                Quaternion lookTarget = waypoints[currentIndex].rotation * Quaternion.Euler(0f, sweepOffset, 0f);
+
                 transform.rotation = Quaternion.RotateTowards(
-                    transform.rotation, waypoints[currentIndex].rotation, lookTurnSpeed * Time.deltaTime);
+                    transform.rotation, lookTarget, lookTurnSpeed * Time.deltaTime);
             }
 
             if (waitTimer <= 0f)

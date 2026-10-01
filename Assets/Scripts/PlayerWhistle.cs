@@ -12,7 +12,9 @@ public class PlayerWhistle : MonoBehaviour
     [SerializeField] private float pulseDuration = 0.7f;
 
     private float cooldownTimer;
-    private GUIStyle labelStyle;
+
+    public float Cooldown => whistleCooldown;
+    public float CooldownRemaining => Mathf.Max(0f, cooldownTimer);
 
     private void Update()
     {
@@ -30,24 +32,5 @@ public class PlayerWhistle : MonoBehaviour
         float footY = transform.position.y - transform.localScale.y + 0.05f;
         Vector3 center = new Vector3(transform.position.x, footY, transform.position.z);
         NoisePulse.Spawn(center, whistleRadius, pulseColor, pulseDuration);
-    }
-
-    private void OnGUI()
-    {
-        if (Time.timeScale == 0f) return;
-
-        if (labelStyle == null)
-        {
-            labelStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 20,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.MiddleRight
-            };
-            labelStyle.normal.textColor = Color.white;
-        }
-
-        string text = cooldownTimer > 0f ? $"Silbido: {cooldownTimer:0.0}s" : "[Q] Silbar";
-        GUI.Label(new Rect(Screen.width - 260f, Screen.height - 50f, 240f, 40f), text, labelStyle);
     }
 }
